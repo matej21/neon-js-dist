@@ -1,0 +1,8 @@
+{
+	"name": "neon-js-dist",
+	"dependencies": {
+		"neon-js": "~1.0",
+		"browserify": "~9.0",
+		"uglify-js": "~2.4"
+	}
+}

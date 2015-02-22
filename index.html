@@ -1,0 +1,86 @@
+<html>
+<head>
+	<script type="text/javascript" src="dist/neon.min.js"></script>
+	<script type="text/javascript">
+		var decode = function () {
+			var input = document.getElementById("input");
+			var output = document.getElementById("output");
+			input.classList.remove('error');
+			output.classList.remove('error');
+			try {
+				var result = neon.Dumper.toText(neon.decode(input.value));
+			} catch (e) {
+				if (e instanceof neon.Error) {
+					input.classList.add('error');
+					output.classList.add('error');
+					input.style.backgroundPositionY = (e.line - 1) * 15;
+					result = e.message;
+				} else {
+					throw e;
+				}
+			}
+			output.value = result;
+		};
+		window.onload = function () {
+			decode();
+			document.getElementById("input").onkeyup = decode;
+			document.getElementById("input").addEventListener('keydown', function (e) {
+				if (e.keyCode === 9) { // tab was pressed
+					// get caret position/selection
+					var start = this.selectionStart;
+					var end = this.selectionEnd;
+
+					var target = e.target;
+					var value = target.value;
+
+					// set textarea value to: text before caret + tab + text after caret
+					target.value = value.substring(0, start)
+					+ "\t"
+					+ value.substring(end);
+
+					// put caret at right position again (add one for the tab)
+					this.selectionStart = this.selectionEnd = start + 1;
+
+					// prevent the focus lose
+					e.preventDefault();
+				}
+			}, false);
+		};
+
+	</script>
+	<style type="text/css">
+		textarea {
+			tab-size: 4;
+			line-height: 15px;
+		}
+
+		textarea.error {
+			background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAPCAIAAACqfTKuAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3goDEiE5cN2KRQAAABJJREFUCNdj+P/wIRMDAwM5GACjXALe69J6XQAAAABJRU5ErkJggg==);
+			background-repeat: repeat-x;
+		}
+	</style>
+</head>
+<body>
+<textarea id="input" style="width: 600px;height: 400px;">
+# neon file - edit it now!
+
+name: Homer
+
+address:
+	street: 742 Evergreen Terrace
+	city: Springfield
+	country: USA
+
+phones: { home: 555-6528, work: 555-7334 }
+
+children:
+	- Bart
+	- Lisa
+	- Maggie
+
+entity: Column(type="integer")
+</textarea>
+<textarea id="output" style="width: 600px;height: 400px;"></textarea>
+
+</body>
+</html>
