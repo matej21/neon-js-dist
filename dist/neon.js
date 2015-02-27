@@ -1,4 +1,4 @@
-/* neon-js 1.0.0 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.neon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* neon-js 1.1.0 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.neon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 var Map = require("./map");
@@ -18,7 +18,10 @@ function Result() {
 }
 
 
-function decoder() {
+function decoder(output) {
+	if (typeof output === "undefined") {
+		output = decoder.MAP;
+	}
 
 	/** @var array */
 	this.tokens = [];
@@ -70,11 +73,28 @@ function decoder() {
 				res.attributes = flatten(res.attributes);
 				res.value = flatten(res.value);
 			} else if (res instanceof Map) {
-				var result = new Map;
-				res.forEach(function (key, value) {
-					result.set(key, flatten(value));
-				});
-				return result;
+				if (output === decoder.FORCE_OBJECT) {
+					var obj = {};
+					res.forEach(function (key, value) {
+						obj[key] = flatten(value);
+					});
+					return obj;
+				} else {
+					var result = new Map;
+					var isList = true;
+					var cmp = 0;
+					res.forEach(function (key, value) {
+						result.set(key, flatten(value));
+						if (key !== cmp++) {
+							isList = false;
+						}
+					});
+					if (output === decoder.MAP) {
+						return result;
+					} else {
+						return isList ? result.values() : result.toObject();
+					}
+				}
 			}
 			return res;
 
@@ -257,7 +277,7 @@ function decoder() {
 					};
 				if (t[0] === '"') {
 					var self = this;
-					value = t.substr(1, t.length - 2).replace(/\\(?:u[0-9a-f]{4}|x[0-9a-f]{2}|.)/i, function (match) {
+					value = t.substr(1, t.length - 2).replace(/\\(?:u[0-9a-f]{4}|x[0-9a-f]{2}|.)/gi, function (match) {
 						var mapping = {'t': "\t", 'n': "\n", 'r': "\r", 'f': "\x0C", 'b': "\x08", '"': '"', '\\': '\\', '/': '/', '_': "\xc2\xa0"};
 						if (mapping[match[1]] !== undefined) {
 							return mapping[match[1]];
@@ -375,6 +395,11 @@ decoder.brackets = {
 	'(': ')'
 };
 decoder.CHAIN = '!!chain';
+
+decoder.MAP = 'map';
+decoder.AUTO = 'auto';
+decoder.FORCE_OBJECT = 'object';
+
 
 module.exports = decoder;
 
@@ -538,7 +563,9 @@ function NeonError(message, line, column) {
 	this.line = line;
 	this.column = column;
 	this.constructor.prototype.__proto__ = Error.prototype;
-	Error.captureStackTrace(this, this.constructor);
+	if (typeof Error.captureStackTrace !== "undefined") {
+		Error.captureStackTrace(this, this.constructor);
+	}
 }
 module.exports = NeonError;
 
@@ -694,14 +721,20 @@ var encode = function (xvar, options) {
 
 
 module.exports.encode = encode;
-module.exports.decode = function (input) {
-	var decoder = new DecoderClass();
+module.exports.decode = function (input, outputFormat) {
+	if (typeof outputFormat ==="undefined") {
+		outputFormat = DecoderClass.MAP;
+	}
+	var decoder = new DecoderClass(outputFormat);
 
 	return decoder.decode(input);
 };
 module.exports.Entity = require('./entity');
 module.exports.Map = require('./map');
 module.exports.CHAIN = DecoderClass.CHAIN;
+module.exports.OUTPUT_MAP = DecoderClass.MAP;
+module.exports.OUTPUT_OBJECT = DecoderClass.FORCE_OBJECT;
+module.exports.OUTPUT_AUTO = DecoderClass.AUTO;
 module.exports.BLOCK = EncoderClass.BLOCK;
 module.exports.Dumper = require('./dumper');
 module.exports.Error = require('./error');
