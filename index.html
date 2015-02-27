@@ -1,6 +1,7 @@
 <html>
 <head>
-	<script type="text/javascript" src="dist/neon.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	<script type="text/javascript" src="dist/neon.js"></script>
 	<script type="text/javascript">
 		var decode = function () {
 			var input = document.getElementById("input");
@@ -52,16 +53,33 @@
 		textarea {
 			tab-size: 4;
 			line-height: 15px;
+			font-family: monospace;
+			width: 100%;
+			height: 600px !important;
 		}
 
 		textarea.error {
 			background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAPCAIAAACqfTKuAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3goDEiE5cN2KRQAAABJJREFUCNdj+P/wIRMDAwM5GACjXALe69J6XQAAAABJRU5ErkJggg==);
 			background-repeat: repeat-x;
 		}
+		body > .container {
+			margin-top: 20px;
+		}
+		.row {
+			margin-top: 20px;
+		}
 	</style>
 </head>
 <body>
-<textarea id="input" style="width: 600px;height: 400px;">
+<div class="container">
+	<h1>NEON-JS</h1>
+	<a href="http://www.github.com/matej21/neon-js" class="btn btn-primary btn-lg">
+		View on Github
+	</a>
+
+	<div class="row">
+		<div class="col-md-6">
+			<textarea id="input" class="form-control">
 # neon file - edit it now!
 
 name: Homer
@@ -79,8 +97,19 @@ children:
 	- Maggie
 
 entity: Column(type="integer")
-</textarea>
-<textarea id="output" style="width: 600px;height: 400px;"></textarea>
+			</textarea>
+
+		</div>
+		<div class="col-md-6">
+			<textarea id="output" class="form-control"></textarea>
+		</div>
+	</div>
+	<h2>Links</h2>
+	<ul>
+		<li><a href="http://ne-on.org/">Official NEON homepage</a></li>
+		<li><a href="https://github.com/matej21/neon-js">NEON-JS on Github</a></li>
+	</ul>
+</div>
 
 </body>
 </html>
