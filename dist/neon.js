@@ -1,4 +1,4 @@
-/* neon-js 1.1.0 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.neon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* neon-js 1.1.2 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.neon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 var Map = require("./map");
@@ -45,7 +45,7 @@ function decoder(output) {
 		} else if (input.substr(0, 3) == "\xEF\xBB\xBF") { // BOM
 			input = input.substr(3);
 		}
-		this.input = "\n" + "" + input.replace("\r", ""); // \n forces indent detection
+		this.input = "\n" + "" + input.replace(/\r\n/g, "\n"); // \n forces indent detection
 
 		var regexp = new RegExp('(' + "" + decoder.patterns.join(')|(') + "" + ')', 'mig');
 		this.tokens = this.split(regexp, this.input);
@@ -506,28 +506,37 @@ function encoder() {
 				if (options & encoder.BLOCK) {
 					v = this.encode(v, encoder.BLOCK);
 					s += (isList ? '-' : this.encode(k) + "" + ':')
-					+ "" + (v.indexOf("\n") === -1 ? (' ' + "" + v) : "\n\t" + "" + v.replace("\n", "\n\t"))
+					+ "" + (v.indexOf("\n") === -1 ? (' ' + "" + v) : "\n\t" + "" + v.replace(/\n/g, "\n\t"))
 					+ "" + "\n";
 				} else {
 					s += (isList ? '' : this.encode(k) + "" + ': ') + "" + this.encode(v) + "" + ', ';
 				}
 			}
 			if (options & encoder.BLOCK) {
-				return s.trim() + "\n";
+				return s.trim().replace(/^\s*\n/gm, '') + "\n";
 			} else {
 				return (isList ? '[' : '{') + "" + s.substr(0, s.length - 2) + "" + (isList ? ']' : '}');
 			}
 
-		} else if (typeof xvar == "string" && isNaN(xvar)
-			&& !xvar.match(/[\x00-\x1F]|^\d{4}|^(true|false|yes|no|on|off|null)$/i)
-			&& (new RegExp("^" + Decoder.patterns[1] + "$")).exec(xvar) // 1 = literals
-		) {
+		} else if (this.isLiteral(xvar)) {
 			return xvar;
 		} else {
 			return JSON.stringify(xvar);
 		}
 	};
 
+	this.isLiteral = function (value) {
+		if (typeof value !== "string" || !isNaN(value)) {
+			return false;
+		}
+		if (value.match(/[\x00-\x1F]|^\d{4}|^(true|false|yes|no|on|off|null)$/i)) {
+			return false;
+		}
+		var result = (new RegExp("^" + Decoder.patterns[1])).exec(value);
+
+		return result && result[0].length === value.length;
+
+	}
 
 }
 encoder.BLOCK = 1;
